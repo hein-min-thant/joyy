@@ -7,6 +7,8 @@ import { Navbar } from "@/components/Navbar";
 import { ComicCard } from "@/components/ComicCard";
 import { useRouter } from "next/navigation";
 
+export const dynamic = 'force-dynamic';
+
 export default function Library() {
     const router = useRouter();
     const { user, isSignedIn } = useUser();

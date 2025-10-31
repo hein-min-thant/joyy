@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -17,7 +17,7 @@ const SORT_OPTIONS = [
     { value: "price-high", label: "Price: High to Low" },
 ];
 
-export default function SearchPage() {
+function SearchContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const queryParam = searchParams.get("q") || "";
@@ -149,8 +149,8 @@ export default function SearchPage() {
                                         key={category}
                                         onClick={() => setSelectedCategory(category)}
                                         className={`h-8 px-3 inline-flex items-center text-xs font-medium rounded-md transition-colors ${selectedCategory === category
-                                                ? "bg-black dark:bg-white text-white dark:text-black"
-                                                : "border border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:border-gray-400 dark:hover:border-gray-600"
+                                            ? "bg-black dark:bg-white text-white dark:text-black"
+                                            : "border border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:border-gray-400 dark:hover:border-gray-600"
                                             }`}
                                     >
                                         {category}
@@ -238,5 +238,20 @@ export default function SearchPage() {
                 </div>
             </main>
         </div>
+    );
+}
+
+export default function SearchPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-white dark:bg-black">
+                <Navbar />
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 py-20 text-center">
+                    <div className="inline-block h-6 w-6 border-2 border-gray-300 dark:border-gray-700 border-t-gray-900 dark:border-t-gray-100 rounded-full animate-spin" />
+                </div>
+            </div>
+        }>
+            <SearchContent />
+        </Suspense>
     );
 }
