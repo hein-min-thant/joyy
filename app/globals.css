@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    html {
+        scroll-behavior: smooth;
+    }
+
+    body {
+        @apply antialiased;
+    }
+}
+
+/* Reading page - seamless image scroll */
+.reading-container img {
+    @apply block w-full;
+    margin: 0 !important;
+    padding: 0 !important;
+}
