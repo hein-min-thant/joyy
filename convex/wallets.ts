@@ -94,6 +94,30 @@ export const getUsername = query({
     },
 });
 
+export const searchByUsername = query({
+    args: { username: v.string() },
+    handler: async (ctx, args) => {
+        if (!args.username || args.username.length < 2) {
+            return null;
+        }
+
+        const wallet = await ctx.db
+            .query("wallets")
+            .withIndex("by_username", (q) => q.eq("username", args.username.toLowerCase()))
+            .first();
+
+        if (!wallet) {
+            return null;
+        }
+
+        return {
+            userId: wallet.userId,
+            username: wallet.username,
+            coins: wallet.coins,
+        };
+    },
+});
+
 export const topup = mutation({
     args: {
         identifier: v.string(), // Can be userId or username

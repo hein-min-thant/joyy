@@ -53,7 +53,7 @@ export const list = query({
 // Ban a user permanently (admin only)
 export const banUser = mutation({
     args: {
-        userId: v.string(),
+        identifier: v.string(), // Can be userId or username
         reason: v.string(),
         adminUserId: v.string(),
     },
@@ -68,10 +68,21 @@ export const banUser = mutation({
             throw new Error("Unauthorized: Admin access required");
         }
 
+        // Try to find user by username first
+        let userId = args.identifier;
+        const wallet = await ctx.db
+            .query("wallets")
+            .withIndex("by_username", (q) => q.eq("username", args.identifier.toLowerCase()))
+            .first();
+
+        if (wallet) {
+            userId = wallet.userId;
+        }
+
         // Check if user is already banned
         const existing = await ctx.db
             .query("bannedUsers")
-            .withIndex("by_user", (q) => q.eq("userId", args.userId))
+            .withIndex("by_user", (q) => q.eq("userId", userId))
             .filter((q) => q.eq(q.field("isActive"), true))
             .first();
 
@@ -80,7 +91,7 @@ export const banUser = mutation({
         }
 
         return await ctx.db.insert("bannedUsers", {
-            userId: args.userId,
+            userId: userId,
             reason: args.reason,
             type: "ban",
             bannedBy: args.adminUserId,
@@ -93,7 +104,7 @@ export const banUser = mutation({
 // Suspend a user temporarily (admin only)
 export const suspendUser = mutation({
     args: {
-        userId: v.string(),
+        identifier: v.string(), // Can be userId or username
         reason: v.string(),
         days: v.number(), // Number of days to suspend
         adminUserId: v.string(),
@@ -109,10 +120,21 @@ export const suspendUser = mutation({
             throw new Error("Unauthorized: Admin access required");
         }
 
+        // Try to find user by username first
+        let userId = args.identifier;
+        const wallet = await ctx.db
+            .query("wallets")
+            .withIndex("by_username", (q) => q.eq("username", args.identifier.toLowerCase()))
+            .first();
+
+        if (wallet) {
+            userId = wallet.userId;
+        }
+
         // Check if user is already banned/suspended
         const existing = await ctx.db
             .query("bannedUsers")
-            .withIndex("by_user", (q) => q.eq("userId", args.userId))
+            .withIndex("by_user", (q) => q.eq("userId", userId))
             .filter((q) => q.eq(q.field("isActive"), true))
             .first();
 
@@ -123,7 +145,7 @@ export const suspendUser = mutation({
         const expiresAt = Date.now() + args.days * 24 * 60 * 60 * 1000;
 
         return await ctx.db.insert("bannedUsers", {
-            userId: args.userId,
+            userId: userId,
             reason: args.reason,
             type: "suspend",
             bannedBy: args.adminUserId,

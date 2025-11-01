@@ -6,10 +6,11 @@ import { ConvexClientProvider } from "./ConvexClientProvider";
 import { HeroUIProvider } from "@heroui/react";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { Footer } from "@/components/Footer";
+import { BanCheck } from "@/components/BanCheck";
 import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
-    title: "JOYY - Manga & Comics",
+    title: "JOYY",
     description: "Read your favorite manga and comics",
 };
 
@@ -25,6 +26,7 @@ export default function RootLayout({
                     <ThemeProvider>
                         <ConvexClientProvider>
                             <HeroUIProvider>
+                                <BanCheck />
                                 <div className="flex-1 flex flex-col">
                                     {children}
                                 </div>

@@ -27,6 +27,12 @@ export default function BannedUsers() {
     const [reason, setReason] = useState("");
     const [suspendDays, setSuspendDays] = useState("7");
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [searchUsername, setSearchUsername] = useState("");
+
+    const userSearch = useQuery(
+        api.wallets.searchByUsername,
+        searchUsername.length >= 2 ? { username: searchUsername } : "skip"
+    );
 
     if (isAdmin === false) {
         router.push("/");
@@ -52,14 +58,14 @@ export default function BannedUsers() {
         try {
             if (banType === "ban") {
                 await banUser({
-                    userId: targetUserId.trim(),
+                    identifier: targetUserId.trim(),
                     reason: reason.trim(),
                     adminUserId: user.id,
                 });
                 toast.success("User banned successfully");
             } else {
                 await suspendUser({
-                    userId: targetUserId.trim(),
+                    identifier: targetUserId.trim(),
                     reason: reason.trim(),
                     days: parseInt(suspendDays),
                     adminUserId: user.id,
@@ -70,6 +76,7 @@ export default function BannedUsers() {
             setTargetUserId("");
             setReason("");
             setSuspendDays("7");
+            setSearchUsername("");
         } catch (error: any) {
             toast.error(error.message || "Failed to ban/suspend user");
         } finally {
@@ -209,16 +216,52 @@ export default function BannedUsers() {
 
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                        User ID
+                                        Search by Username
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={searchUsername}
+                                        onChange={(e) => setSearchUsername(e.target.value.toLowerCase())}
+                                        placeholder="Type username to search..."
+                                        className="w-full h-10 px-3 text-sm border border-gray-200 dark:border-gray-800 rounded-md bg-white dark:bg-black text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-100"
+                                    />
+                                    {userSearch && (
+                                        <div className="mt-2 p-3 rounded-md bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-900">
+                                            <p className="text-xs font-medium text-green-700 dark:text-green-300 mb-1">User Found:</p>
+                                            <p className="text-sm text-green-900 dark:text-green-100">Username: {userSearch.username}</p>
+                                            <p className="text-xs text-green-700 dark:text-green-300">User ID: {userSearch.userId}</p>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setTargetUserId(userSearch.username);
+                                                    setSearchUsername("");
+                                                }}
+                                                className="mt-2 h-7 px-2 text-xs font-medium bg-green-600 dark:bg-green-700 text-white rounded-md hover:opacity-80"
+                                            >
+                                                Use this user
+                                            </button>
+                                        </div>
+                                    )}
+                                    {searchUsername.length >= 2 && !userSearch && (
+                                        <p className="text-xs text-red-600 dark:text-red-400 mt-1">No user found with username "{searchUsername}"</p>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Username or User ID
                                     </label>
                                     <input
                                         type="text"
                                         value={targetUserId}
                                         onChange={(e) => setTargetUserId(e.target.value)}
-                                        placeholder="Enter user ID"
+                                        placeholder="Enter username or user ID"
                                         required
                                         className="w-full h-10 px-3 text-sm border border-gray-200 dark:border-gray-800 rounded-md bg-white dark:bg-black text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-100"
                                     />
+                                    <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                                        Or enter manually if you know the username/ID
+                                    </p>
                                 </div>
 
                                 {banType === "suspend" && (
