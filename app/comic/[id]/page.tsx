@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { use, useState, useEffect } from "react";
+import { use, useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
@@ -10,7 +10,7 @@ import { Navbar } from "@/components/Navbar";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { PurchaseDialog } from "./PurchaseDialog";
-import { Star, Heart, Eye, ShoppingCart, BookOpen, ArrowLeft } from "lucide-react";
+import { Star, Heart, Eye, ShoppingCart, BookOpen, ArrowLeft, Search } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardBody, Button, Chip, CardHeader, Divider, Textarea } from "@heroui/react";
 
@@ -21,6 +21,7 @@ export default function ComicDetail({ params }: { params: Promise<{ id: string }
     const [rating, setRating] = useState(0);
     const [comment, setComment] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [chapterSearch, setChapterSearch] = useState("");
     const { id } = use(params);
 
     const comic = useQuery(api.comics.get, { id: id as Id<"comics"> });
@@ -105,6 +106,19 @@ export default function ComicDetail({ params }: { params: Promise<{ id: string }
             setIsSubmitting(false);
         }
     };
+
+    // Filter chapters based on search (must be before early return)
+    const filteredChapters = useMemo(() => {
+        if (!chapters) return [];
+        if (!chapterSearch.trim()) return chapters;
+
+        const searchLower = chapterSearch.toLowerCase();
+        return chapters.filter(
+            (chapter) =>
+                chapter.chapterNumber.toString().includes(searchLower) ||
+                chapter.title.toLowerCase().includes(searchLower)
+        );
+    }, [chapters, chapterSearch]);
 
     if (!comic) {
         return (
@@ -252,13 +266,28 @@ export default function ComicDetail({ params }: { params: Promise<{ id: string }
                         {/* Chapters List */}
                         <div className="rounded-lg border border-gray-200 dark:border-gray-800 overflow-hidden">
                             <div className="p-4 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
-                                <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                                    Chapters ({chapters?.length || 0})
-                                </h3>
+                                <div className="flex items-center justify-between gap-4 mb-3">
+                                    <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                                        Chapters ({chapters?.length || 0})
+                                    </h3>
+                                </div>
+                                {/* Search Input */}
+                                {chapters && chapters.length > 0 && (
+                                    <div className="relative">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                        <input
+                                            type="text"
+                                            placeholder="Search chapters..."
+                                            value={chapterSearch}
+                                            onChange={(e) => setChapterSearch(e.target.value)}
+                                            className="w-full h-9 pl-9 pr-3 text-sm border border-gray-200 dark:border-gray-800 rounded-md bg-white dark:bg-black text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-100"
+                                        />
+                                    </div>
+                                )}
                             </div>
                             <div className="divide-y divide-gray-200 dark:divide-gray-800">
-                                {chapters && chapters.length > 0 ? (
-                                    chapters.map((chapter) => (
+                                {filteredChapters && filteredChapters.length > 0 ? (
+                                    filteredChapters.map((chapter) => (
                                         <button
                                             key={chapter._id}
                                             onClick={() => router.push(`/read/${id}?chapter=${chapter._id}`)}
@@ -280,6 +309,12 @@ export default function ComicDetail({ params }: { params: Promise<{ id: string }
                                             </div>
                                         </button>
                                     ))
+                                ) : chapters && chapters.length > 0 ? (
+                                    <div className="p-8 text-center">
+                                        <p className="text-sm text-gray-500 dark:text-gray-500">
+                                            No chapters match your search
+                                        </p>
+                                    </div>
                                 ) : (
                                     <div className="p-8 text-center">
                                         <p className="text-sm text-gray-500 dark:text-gray-500">
