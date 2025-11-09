@@ -11,8 +11,9 @@ export function BanCheck() {
     const pathname = usePathname();
     const router = useRouter();
 
+    // Skip ban check if user is not logged in or API doesn't exist
     const userStatus = useQuery(
-        (api as any).bannedUsers?.checkUserStatus,
+        api.bannedUsers.checkUserStatus,
         user?.id ? { userId: user.id } : "skip"
     );
 
@@ -22,7 +23,8 @@ export function BanCheck() {
             return;
         }
 
-        if (userStatus?.isBanned) {
+        // Only redirect if we have a definitive ban status
+        if (userStatus?.isBanned === true) {
             router.push("/blocked");
         }
     }, [userStatus, pathname, router]);
